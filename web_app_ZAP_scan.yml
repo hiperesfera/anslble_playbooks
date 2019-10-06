@@ -1,0 +1,32 @@
+---
+- hosts: localhost
+
+
+
+  tasks:
+
+  - name: Install python-owasp-zap-v2.4
+    shell: >
+      pip install python-owasp-zap-v2.4 
+  
+  - name: Get Ansbile module location
+    shell: >
+      ansible --version | grep "module location" | sed -nre 's/^.+ = (\/.*)$/\1/p'
+    register: command_output
+    
+  - name: Intstall OWASP ZAP module
+    get_url:
+
+      url: 'https://raw.githubusercontent.com/appsecco/ansible-module-owasp-zap/master/owasp_zap_test_module.py'
+      dest: "{{ command_output.stdout }}/modules/owasp_zap_test_module.py"
+
+  - name: Scan a website
+    owasp_zap_test_module:
+      host: "http://zap_host:8080"
+      target: "http://webapp"
+      scantype: active
+    register: output
+
+  - name: Print Scan report
+    debug:
+      msg: "Scan Report: {{ output }}"
