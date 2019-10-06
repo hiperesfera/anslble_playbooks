@@ -1,0 +1,17 @@
+---
+
+- hosts: localhost
+
+
+  tasks:
+   - name: Run ZAP instance
+     docker_container:
+       name: zap-scanner
+       image: owasp/zap2docker-stable
+       auto_remove: yes
+       command: ["zap.sh","-daemon","-host","0.0.0.0","-port","8080","-config","api.disablekey=true","-config","api.addrs.addr.name=.*","-config","api.addrs.addr.regex=true"]
+     register: system_out
+
+   - debug: msg="{{ system_out }}"
+
+ 
