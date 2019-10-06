@@ -1,35 +1,46 @@
----
-- hosts: localhost
-
-
-  tasks:
-
-  - name: Install python-owasp-zap-v2.4
-    shell: >
-      pip install python-owasp-zap-v2.4 
-  
-  - name: Get Ansbile module location
-    shell: >
-      ansible --version | grep "module location" | sed -nre 's/^.+ = (\/.*)$/\1/p'
-    register: command_output
-
-  - name: Get OWASP ZAP container IP
-    shell: >
-      docker inspect zap-scanner | jq .[0].NetworkSettings.IPAddress  | sed -re 's/"//g'
-    register: zap_host
-    
-  - name: Intstall OWASP ZAP module
-    get_url:
-      url: 'https://raw.githubusercontent.com/appsecco/ansible-module-owasp-zap/master/owasp_zap_test_module.py'
-      dest: "{{ command_output.stdout }}/modules/owasp_zap_test_module.py"
-
-  - name: Scan a website
-    owasp_zap_test_module:
-      host: "http://{{zap_host.stdout}}:8080"
-      target: "http://web_app
-      scantype: passive
-    register: output
-
-  - name: Print Scan report
-    debug:
-      msg: "Scan Report: {{ output }}"
+  1 ---
+  2 
+  3 - hosts: localhost
+  4   vars:
+  5     web_app: "jweb_app"
+  6     protocol: "http"
+  7 
+  8   tasks:
+  9 
+ 10   - name: Install python-owasp-zap-v2.4
+ 11     shell: >
+ 12       pip install python-owasp-zap-v2.4
+ 13 
+ 14   - name: Get Ansbile module location
+ 15     shell: >
+ 16       ansible --version | grep "module location" | sed -nre 's/^.+ = (\/.*)$/\1/p'
+ 17     register: command_output
+ 18 
+ 19   - name: Get OWASP ZAP container IP
+ 20     shell: >
+ 21       docker inspect zap-scanner | jq .[0].NetworkSettings.IPAddress  | sed -re 's/"//g'
+ 22     register: zap_host
+ 23 
+ 24   - name: Intstall OWASP ZAP module
+ 25     get_url:
+ 26       url: 'https://raw.githubusercontent.com/appsecco/ansible-module-owasp-zap/master/owasp_zap_test_module.py'
+ 27       dest: "{{ command_output.stdout }}/modules/owasp_zap_test_module.py"
+ 28 
+ 29   - name: Scan a website
+ 30     owasp_zap_test_module:
+ 31       host: "http://{{zap_host.stdout}}:8080"
+ 32       target: "{{ protocol }}://{{ web_app }}"
+ 33       scantype: passive
+ 34     register: output
+ 35 
+ 36   - name: Print Scan report
+ 37     debug:
+ 38       msg: "{{ output }}"
+ 39 
+ 40   - name: Copy report to a local file
+ 41     copy:
+ 42       content: "{{ output }}"
+ 43       dest: "./report_{{ web_app }}.json"
+ 44     delegate_to: localhost
+ 45 
+ 46 
